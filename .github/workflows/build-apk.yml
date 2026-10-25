@@ -40,6 +40,7 @@ jobs:
           fi
 
           rm -rf android
+
           flutter create --platforms=android \
             --org com.example \
             --project-name pinvideo .
@@ -49,33 +50,60 @@ jobs:
               android/app/src/main/AndroidManifest.xml
           fi
 
-      
-    
       - name: Install Android SDK 36
         shell: bash
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME" -type f -name sdkmanager 2>/dev/null | head -n 1)
-          test -n "$SDKMANAGER" || { echo "sdkmanager not found"; exit 1; }
+          test -n "$SDKMANAGER" || {
+            echo "sdkmanager not found"
+            exit 1
+          }
 
           yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
 
-          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+          "$SDKMANAGER" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "platform-tools"
 
       - name: Get Flutter packages
         run: flutter pub get
 
       - name: Verify sharing plugin version
+        shell: bash
         run: |
           flutter pub deps | grep receive_sharing_intent
 
       - name: Set compile SDK to 36
         shell: bash
         run: |
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
+          sed -i \
+            's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' \
+            android/app/build.gradle.kts
+
+          grep -n "compileSdk" android/app/build.gradle.kts
+
+      - name: Align Java and Kotlin targets
+        shell: bash
+        run: |
+          cat >> android/build.gradle.kts <<'GRADLE'
+
+          subprojects {
+              tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+                  kotlinOptions.jvmTarget = "17"
+              }
+
+              tasks.withType<org.gradle.api.tasks.compile.JavaCompile>().configureEach {
+                  sourceCompatibility = "17"
+                  targetCompatibility = "17"
+              }
+          }
+          GRADLE
+
+          tail -n 15 android/build.gradle.kts
 
       - name: Build release APK
         run: flutter build apk --release
-
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
