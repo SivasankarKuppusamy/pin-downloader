@@ -50,37 +50,32 @@ jobs:
           fi
 
       
-      - name: Install Android SDK 37
+    
+      - name: Install Android SDK 36
         shell: bash
         run: |
-          SDKMANAGER=$(find "$ANDROID_HOME" \
-            -type f -name sdkmanager 2>/dev/null | head -n 1)
+          SDKMANAGER=$(find "$ANDROID_HOME" -type f -name sdkmanager 2>/dev/null | head -n 1)
+          test -n "$SDKMANAGER" || { echo "sdkmanager not found"; exit 1; }
 
-          if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager not found"
-            exit 1
-          fi
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
 
-          yes | "$SDKMANAGER" --licenses || true
-
-          "$SDKMANAGER" "platforms;android-37" \
-            "build-tools;36.0.0" \
-            "platform-tools"
-
-
-
-      - name: Set compile SDK to 37
-        shell: bash
-        run: |
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 37/' \
-            android/app/build.gradle.kts
-
+          "$SDKMANAGER" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Get Flutter packages
         run: flutter pub get
 
+      - name: Verify sharing plugin version
+        run: |
+          flutter pub deps | grep receive_sharing_intent
+
+      - name: Set compile SDK to 36
+        shell: bash
+        run: |
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' android/app/build.gradle.kts
+
       - name: Build release APK
         run: flutter build apk --release
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
