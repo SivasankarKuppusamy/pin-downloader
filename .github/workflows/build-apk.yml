@@ -1,13 +1,20 @@
+
 name: Build PinVideo APK
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -24,32 +31,46 @@ jobs:
           channel: stable
           cache: true
 
-      # This starter ZIP intentionally keeps the repo small. Generate the standard
-      # Android Gradle project on the runner, preserving the app's manifest.
       - name: Generate Android project files
         shell: bash
         run: |
-          cp android/app/src/main/AndroidManifest.xml "$RUNNER_TEMP/PinVideoManifest.xml"
-          rm -rf android
-          flutter create --platforms=android --org com.example --project-name pinvideo .
-          cp "$RUNNER_TEMP/PinVideoManifest.xml" android/app/src/main/AndroidManifest.xml
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            cp android/app/src/main/AndroidManifest.xml \
+              "$RUNNER_TEMP/PinVideoManifest.xml"
+          fi
 
-      - name: Install Android SDK 37
+          rm -rf android
+          flutter create --platforms=android \
+            --org com.example \
+            --project-name pinvideo .
+
+          if [ -f "$RUNNER_TEMP/PinVideoManifest.xml" ]; then
+            cp "$RUNNER_TEMP/PinVideoManifest.xml" \
+              android/app/src/main/AndroidManifest.xml
+          fi
+
+      - name: Install Android SDK 36
         shell: bash
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --update 
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "platform-tools"
 
-      - name: Set compile SDK to 37
+      - name: Set compile SDK to 36
         shell: bash
         run: |
           if [ -f android/app/build.gradle.kts ]; then
-            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 37/' android/app/build.gradle.kts
-            sed -i 's/compileSdk = 36/compileSdk = 37/' android/app/build.gradle.kts
+            sed -i \
+              's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' \
+              android/app/build.gradle.kts
           elif [ -f android/app/build.gradle ]; then
-            sed -i 's/compileSdk flutter.compileSdkVersion/compileSdk 37/' android/app/build.gradle
-            sed -i 's/compileSdk 36/compileSdk 37/' android/app/build.gradle
+            sed -i \
+              's/compileSdk flutter.compileSdkVersion/compileSdk 36/' \
+              android/app/build.gradle
+          else
+            echo "Android app Gradle file not found"
+            exit 1
           fi
 
       - name: Get Flutter packages
@@ -63,3 +84,4 @@ jobs:
         with:
           name: pinvideo-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
