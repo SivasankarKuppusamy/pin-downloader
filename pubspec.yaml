@@ -1,0 +1,23 @@
+name: pinvideo
+description: Personal Pinterest video saver with Android share intent and Gallery saving.
+publish_to: "none"
+version: 1.1.0+2
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.7.0
+  gal: ^2.3.3
+  receive_sharing_intent: ^1.9.0
+  webview_flutter: ^4.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
