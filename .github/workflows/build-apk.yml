@@ -37,8 +37,9 @@ jobs:
       - name: Install Android SDK 37
         shell: bash
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37" "build-tools;37.0.0"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --update 
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-37"
 
       - name: Set compile SDK to 37
         shell: bash
