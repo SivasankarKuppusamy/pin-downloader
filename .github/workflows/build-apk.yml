@@ -49,41 +49,32 @@ jobs:
               android/app/src/main/AndroidManifest.xml
           fi
 
-
-      - name: Install Android SDK 36
+      
+      - name: Install Android SDK 37
         shell: bash
         run: |
           SDKMANAGER=$(find "$ANDROID_HOME" \
             -type f -name sdkmanager 2>/dev/null | head -n 1)
 
           if [ -z "$SDKMANAGER" ]; then
-            echo "sdkmanager not found under ANDROID_HOME=$ANDROID_HOME"
+            echo "sdkmanager not found"
             exit 1
           fi
-
-          echo "Using SDK manager: $SDKMANAGER"
 
           yes | "$SDKMANAGER" --licenses || true
 
-          "$SDKMANAGER" "platforms;android-36" \
+          "$SDKMANAGER" "platforms;android-37" \
             "build-tools;36.0.0" \
             "platform-tools"
 
-      - name: Set compile SDK to 36
+
+
+      - name: Set compile SDK to 37
         shell: bash
         run: |
-          if [ -f android/app/build.gradle.kts ]; then
-            sed -i \
-              's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' \
-              android/app/build.gradle.kts
-          elif [ -f android/app/build.gradle ]; then
-            sed -i \
-              's/compileSdk flutter.compileSdkVersion/compileSdk 36/' \
-              android/app/build.gradle
-          else
-            echo "Android app Gradle file not found"
-            exit 1
-          fi
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 37/' \
+            android/app/build.gradle.kts
+
 
       - name: Get Flutter packages
         run: flutter pub get
